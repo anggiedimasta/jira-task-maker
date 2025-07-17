@@ -108,7 +108,7 @@
 <script setup lang="ts">
 interface UiSpec {
   name: string
-  design: string | File
+  design: string | File | undefined
   note?: string
 }
 

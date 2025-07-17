@@ -12,105 +12,44 @@ export function useFormState() {
   const copied = ref(false)
 
   const form = ref<FormState>({
-    objective: [
-      'Implement user authentication system with login and registration functionality',
-      'Create dashboard interface with user profile management and settings'
-    ],
-    acceptance: [
-      {
-        given: [
-          'User is on the login page',
-          'User has valid credentials'
-        ],
-        when: [
-          'User enters email and password',
-          'User clicks the login button'
-        ],
-        then: [
-          'User should be redirected to dashboard',
-          'User session should be created and stored'
-        ]
-      },
-      {
-        given: [
-          'User is logged in and on dashboard',
-          'User profile data is available'
-        ],
-        when: [
-          'User clicks on profile settings',
-          'User updates their profile information'
-        ],
-        then: [
-          'Profile changes should be saved successfully',
-          'Updated information should be displayed immediately'
-        ]
-      }
-    ],
+    objective: [''],
+    acceptance: [{
+      given: [''],
+      when: [''],
+      then: ['']
+    }],
     tech: {
       stepGroups: [
         {
           steps: [
             {
-              step: 'Set up JWT authentication middleware',
-              fileReference: 'src/middleware/auth.ts'
-            },
-            {
-              step: 'Implement bcrypt password hashing',
-              fileReference: 'src/utils/password.ts'
-            },
-            {
-              step: 'Create login and register API endpoints',
-              fileReference: 'src/routes/auth.ts'
-            }
-          ]
-        },
-        {
-          steps: [
-            {
-              step: 'Create dashboard layout component',
-              fileReference: 'src/components/Dashboard.vue'
-            },
-            {
-              step: 'Implement user profile management',
-              fileReference: 'src/components/Profile.vue'
-            },
-            {
-              step: 'Add settings configuration',
-              fileReference: 'src/components/Settings.vue'
+              step: '',
+              fileReference: ''
             }
           ]
         }
       ],
-      figma: 'https://www.figma.com/file/example/auth-system-design',
+      figma: '',
       epicBranch: '',
-      repository: 'https://github.com/company/auth-system',
-      page: 'https://app.example.com/auth',
-      account: 'dev.genesis@company.com'
+      repository: '',
+      page: '',
+      account: ''
     },
-    api: [
-      {
-        name: 'User Authentication API',
-        endpointUrl: 'https://api.example.com/auth',
-        contract: {
-          method: 'POST',
-          requestPayload: '{\n  "email": "string",\n  "password": "string"\n}',
-          responsePayload: '{\n  "token": "string",\n  "user": {\n    "id": "string",\n    "email": "string",\n    "name": "string"\n  }\n}'
-        }
+    api: [{
+      name: '',
+      endpointUrl: '',
+      contract: {
+        method: '',
+        requestPayload: '',
+        responsePayload: ''
       }
-    ],
-    ui: [
-      {
-        name: 'Login Form',
-        design: '',
-        note: 'Include remember me checkbox and forgot password link'
-      },
-      {
-        name: 'Dashboard',
-        design: '',
-        note: 'Responsive design for mobile devices'
-      }
-    ],
-    notes: '• Consider implementing 2FA for enhanced security\n• Add password reset functionality\n• Include user activity logging\n• Plan for scalability with user growth\n• Test with various browsers and devices'
+    }],
+    ui: [{
+      name: '',
+      design: '',
+      note: ''
+    }],
+    notes: ''
   })
 
   const steps: FormStep[] = [

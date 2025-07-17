@@ -1,6 +1,6 @@
 interface UiSpec {
   name: string
-  design: string | File
+  design: string | File | undefined
   note?: string
 }
 
@@ -114,21 +114,21 @@ export function useImageUtils() {
     }
   }
 
-  const getImagePreviewUrl = (design: string | File): string => {
+  const getImagePreviewUrl = (design: string | File | undefined): string => {
     if (design instanceof File) {
       return URL.createObjectURL(design)
     }
     return ''
   }
 
-  const getImageFileName = (design: string | File): string => {
+  const getImageFileName = (design: string | File | undefined): string => {
     if (design instanceof File) {
       return design.name
     }
     return ''
   }
 
-  const isImageFile = (design: string | File): boolean => {
+  const isImageFile = (design: string | File | undefined): boolean => {
     return design instanceof File && design.type.startsWith('image/')
   }
 
