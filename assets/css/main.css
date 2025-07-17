@@ -1,0 +1,147 @@
+@import "tailwindcss";
+
+/* CSS Variables for Tailwind v4 - Navy Blue Primary Color */
+:root {
+  --color-primary-50: #f0f4ff;
+  --color-primary-100: #e0e9ff;
+  --color-primary-200: #c7d6ff;
+  --color-primary-300: #a4b8ff;
+  --color-primary-400: #8191ff;
+  --color-primary-500: #6b63ff;
+  --color-primary-600: #5b4bdb;
+  --color-primary-700: #4c3bb8;
+  --color-primary-800: #3f2f94;
+  --color-primary-900: #352a76;
+  --color-primary-950: #1e1b4b;
+
+  /* Additional CSS variables for Nuxt UI compatibility */
+  --color-primary: #6b63ff;
+  --color-primary-hover: #5b4bdb;
+  --color-primary-active: #4c3bb8;
+}
+
+/* Override Nuxt UI primary colors */
+[data-variant="solid"][data-color="primary"] {
+  background-color: var(--color-primary-500) !important;
+  border-color: var(--color-primary-500) !important;
+}
+
+[data-variant="solid"][data-color="primary"]:hover {
+  background-color: var(--color-primary-600) !important;
+  border-color: var(--color-primary-600) !important;
+}
+
+[data-variant="solid"][data-color="primary"]:focus {
+  background-color: var(--color-primary-700) !important;
+  border-color: var(--color-primary-700) !important;
+}
+
+button {
+	@apply p-2 rounded-lg flex items-center justify-center cursor-pointer;
+}
+
+/* Alternative approach using attribute selectors */
+button[data-color="primary"] {
+  background-color: var(--color-primary-500) !important;
+  border-color: var(--color-primary-500) !important;
+}
+
+button[data-color="primary"]:hover {
+  background-color: var(--color-primary-600) !important;
+  border-color: var(--color-primary-600) !important;
+}
+
+/* Custom navy primary button class */
+.navy-primary {
+  background-color: var(--color-primary-500) !important;
+  border-color: var(--color-primary-500) !important;
+  color: white !important;
+}
+
+.navy-primary:hover:not(:disabled) {
+  background-color: var(--color-primary-600) !important;
+  border-color: var(--color-primary-600) !important;
+}
+
+.navy-primary:focus {
+  background-color: var(--color-primary-700) !important;
+  border-color: var(--color-primary-700) !important;
+}
+
+/* Custom styles using @apply */
+.form-wizard {
+  @apply min-h-screen p-8 bg-white rounded-lg;
+}
+
+.form-wizard .u-card {
+  @apply shadow-2xl;
+}
+
+.form-wizard textarea {
+	@apply border border-gray-300  bg-white  rounded-lg p-4;
+}
+
+/* UInput border styling */
+.u-input,
+[data-variant="outline"] input,
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="search"],
+input[type="url"],
+input[type="tel"],
+input[type="number"] {
+  @apply border border-gray-300  rounded-lg p-2 bg-white  text-gray-900;
+}
+
+/* Ensure form labels are visible */
+.u-form-field__label,
+label {
+  @apply text-gray-700;
+}
+
+.u-input:focus,
+[data-variant="outline"] input:focus,
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="search"]:focus,
+input[type="url"]:focus,
+input[type="tel"]:focus,
+input[type="number"]:focus {
+  border-color: var(--color-primary-500);
+  box-shadow: 0 0 0 2px var(--color-primary-200);
+  outline: none;
+}
+
+.u-input:hover,
+[data-variant="outline"] input:hover,
+input[type="text"]:hover,
+input[type="email"]:hover,
+input[type="password"]:hover,
+input[type="search"]:hover,
+input[type="url"]:hover,
+input[type="tel"]:hover,
+input[type="number"]:hover {
+  @apply border-gray-400;
+}
+
+/* Error styling - only target the error message text */
+.u-form-field__error,
+[data-error] .u-form-field__error,
+.text-red-500,
+.text-red-600,
+.text-red-700,
+.text-error,
+.error-message,
+.form-error {
+  color: #dc2626 !important;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Specific error message styling */
+.error-field .u-form-field__error,
+.error-field [data-error] {
+  color: #dc2626 !important;
+}
