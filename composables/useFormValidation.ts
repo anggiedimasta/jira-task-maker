@@ -1,62 +1,61 @@
 import { ref } from 'vue'
 import { z } from 'zod'
 
-// Acceptance criteria structure
+// Acceptance criteria structure - all fields optional
 const acceptanceCriteriaSchema = z.object({
-  given: z.array(z.string().min(3, 'Given condition must be at least 3 characters')).min(1, 'At least one Given condition is required'),
-  when: z.array(z.string().min(3, 'When condition must be at least 3 characters')).min(1, 'At least one When condition is required'),
-  then: z.array(z.string().min(3, 'Then condition must be at least 3 characters')).min(1, 'At least one Then condition is required')
+  given: z.array(z.string().min(3, 'Given condition must be at least 3 characters').optional().or(z.literal(''))).optional().or(z.literal([])),
+  when: z.array(z.string().min(3, 'When condition must be at least 3 characters').optional().or(z.literal(''))).optional().or(z.literal([])),
+  then: z.array(z.string().min(3, 'Then condition must be at least 3 characters').optional().or(z.literal(''))).optional().or(z.literal([]))
 })
 
 // Technical step structure
 const techStepSchema = z.object({
-  step: z.string().min(3, 'Technical step must be at least 3 characters').max(500, 'Technical step must be less than 500 characters'),
+  step: z.string().min(3, 'Technical step must be at least 3 characters').max(500, 'Technical step must be less than 500 characters').optional().or(z.literal('')),
   fileReference: z.string().max(200, 'File reference must be less than 200 characters').optional().or(z.literal(''))
 })
 
-// API contract structure
+// API contract structure - all fields optional
 const apiContractSchema = z.object({
-  method: z.string().min(1, 'HTTP method is required'),
-  requestPayload: z.string().min(1, 'Request payload is required'),
-  responsePayload: z.string().min(1, 'Response payload is required')
+  method: z.string().min(1, 'HTTP method is required').optional().or(z.literal('')),
+  requestPayload: z.string().min(1, 'Request payload is required').optional().or(z.literal('')),
+  responsePayload: z.string().min(1, 'Response payload is required').optional().or(z.literal(''))
 })
 
 // UI specification structure
 const uiSpecSchema = z.array(z.object({
-  name: z.string().max(200, 'UI name must be less than 200 characters'),
+  name: z.string().max(200, 'UI name must be less than 200 characters').optional().or(z.literal('')),
   design: z.union([z.string(), z.instanceof(File)]).optional().or(z.literal('')),
   note: z.string().max(300, 'Note must be less than 300 characters').optional().or(z.literal(''))
 })).optional()
 
-// API specification structure
+// API specification structure - all fields optional
 const apiSpecSchema = z.array(z.object({
-  name: z.string().min(1, 'API name is required'),
-  endpointUrl: z.string().url('Please enter a valid endpoint URL').min(1, 'Endpoint URL is required'),
+  name: z.string().min(1, 'API name is required').optional().or(z.literal('')),
+  endpointUrl: z.string().url('Please enter a valid endpoint URL').min(1, 'Endpoint URL is required').optional().or(z.literal('')),
   contract: apiContractSchema
 })).optional()
 
-// Technical step group structure (per objective)
+// Technical step group structure (per objective) - all fields optional
 const techStepGroupSchema = z.object({
-  steps: z.array(techStepSchema).min(1, 'At least one technical step is required')
+  steps: z.array(techStepSchema).optional().or(z.literal([]))
 })
 
-// Technical specification structure
+// Technical specification structure - all fields optional
 const techSpecSchema = z.object({
-  stepGroups: z.array(techStepGroupSchema).min(1, 'At least one technical step group is required'),
+  stepGroups: z.array(techStepGroupSchema).optional().or(z.literal([])),
   figma: z.string().url('Please enter a valid Figma URL').optional().or(z.literal('')),
   epicBranch: z.string().max(200, 'Epic branch must be less than 200 characters').optional().or(z.literal('')),
-  repository: z.string().url('Please enter a valid repository URL').min(1, 'Repository URL is required'),
-  page: z.string().url('Please enter a valid page URL').min(1, 'Page URL is required'),
-  account: z.string().max(200, 'Account must be less than 200 characters').min(1, 'Account is required')
+  repository: z.string().url('Please enter a valid repository URL').optional().or(z.literal('')),
+  page: z.string().url('Please enter a valid page URL').optional().or(z.literal('')),
+  account: z.string().max(200, 'Account must be less than 200 characters').optional().or(z.literal(''))
 })
 
-// Zod Schema for form validation
+// Zod Schema for form validation - all fields optional
 export const formSchema = z.object({
-  objective: z.array(z.string().min(5, 'Objective must be at least 5 characters long').max(500, 'Objective must be less than 500 characters'))
-    .min(1, 'At least one objective is required')
-    .refine((objectives) => objectives.every(obj => obj.trim().length > 0), 'All objectives must not be empty'),
+  objective: z.array(z.string().min(5, 'Objective must be at least 5 characters long').max(500, 'Objective must be less than 500 characters').optional().or(z.literal('')))
+    .optional().or(z.literal([])),
   acceptance: z.array(acceptanceCriteriaSchema)
-    .min(1, 'At least one acceptance criteria set is required'),
+    .optional().or(z.literal([])),
   tech: techSpecSchema,
   api: apiSpecSchema.optional(),
   ui: uiSpecSchema,
@@ -107,7 +106,7 @@ export function useFormValidation() {
     return uiFieldErrors.value[uiIndex]?.design || ''
   }
 
-    const validateCurrentStep = (form: FormState, currentKey: keyof FormState): boolean => {
+  const validateCurrentStep = (form: FormState, currentKey: keyof FormState): boolean => {
     // Special handling for UI validation
     if (currentKey === 'ui') {
       const uiSpecs = form[currentKey] as Array<{ name: string, design: string, note?: string }>
@@ -184,37 +183,28 @@ export function useFormValidation() {
         // Get specific error message for objectives
         if (currentKey === 'objective') {
           const objectives = form[currentKey] as string[]
-          if (objectives.length === 0 || objectives.every(obj => !obj.trim())) {
-            validationErrors.value[currentKey] = 'At least one objective is required'
-          } else if (objectives.some(obj => obj.trim().length < 5)) {
+          if (objectives.length === 0) {
+            // Objectives are optional, so empty array is valid
+            validationErrors.value[currentKey] = ''
+            return true
+          } else if (objectives.some(obj => obj.trim().length > 0 && obj.trim().length < 5)) {
             validationErrors.value[currentKey] = 'Each objective must be at least 5 characters long'
           } else {
-            validationErrors.value[currentKey] = 'Please fill in all objectives'
+            validationErrors.value[currentKey] = ''
+            return true
           }
-                        } else if (currentKey === 'acceptance') {
+        } else if (currentKey === 'acceptance') {
           // Provide specific error messages for acceptance criteria
           const acceptanceCriteria = form[currentKey] as Array<{ given: string[], when: string[], then: string[] }>
           const errors: string[] = []
 
+          if (acceptanceCriteria.length === 0) {
+            // Acceptance criteria are optional, so empty array is valid
+            validationErrors.value[currentKey] = ''
+            return true
+          }
+
           acceptanceCriteria.forEach((criteria, index) => {
-            // Check if at least one Given condition is filled
-            const hasValidGiven = criteria.given.some(given => given.trim().length >= 3)
-            if (!hasValidGiven) {
-              errors.push(`At least one Given condition is required for criteria ${index + 1}`)
-            }
-
-            // Check if at least one When condition is filled
-            const hasValidWhen = criteria.when.some(when => when.trim().length >= 3)
-            if (!hasValidWhen) {
-              errors.push(`At least one When condition is required for criteria ${index + 1}`)
-            }
-
-            // Check if at least one Then condition is filled
-            const hasValidThen = criteria.then.some(then => then.trim().length >= 3)
-            if (!hasValidThen) {
-              errors.push(`At least one Then condition is required for criteria ${index + 1}`)
-            }
-
             // Check individual condition lengths (only for filled conditions)
             criteria.given.forEach((given, givenIndex) => {
               if (given.trim().length > 0 && given.trim().length < 3) {
@@ -233,30 +223,15 @@ export function useFormValidation() {
             })
           })
 
-          validationErrors.value[currentKey] = errors.length > 0 ? errors[0] : 'Validation failed'
-                } else if (currentKey === 'tech') {
+          validationErrors.value[currentKey] = errors.length > 0 ? errors[0] : ''
+          return errors.length === 0
+        } else if (currentKey === 'tech') {
           // Provide specific error messages for technical specification
           const techSpec = form[currentKey] as { repository?: string, page?: string, account?: string, stepGroups: Array<{ steps: Array<{ step: string, fileReference?: string }> }> }
           const errors: string[] = []
 
-          if (!techSpec.repository?.trim()) {
-            errors.push('Repository URL is required')
-          }
-          if (!techSpec.page?.trim()) {
-            errors.push('Page URL is required')
-          }
-          if (!techSpec.account?.trim()) {
-            errors.push('Account is required')
-          }
-
-          // Check if each step group has at least one valid step
+          // Check individual step lengths (only for filled steps)
           techSpec.stepGroups.forEach((stepGroup, groupIndex) => {
-            const hasValidStep = stepGroup.steps.some(step => step.step.trim().length >= 3)
-            if (!hasValidStep) {
-              errors.push(`At least one technical step is required for objective ${groupIndex + 1}`)
-            }
-
-            // Check individual step lengths (only for filled steps)
             stepGroup.steps.forEach((step, stepIndex) => {
               if (step.step.trim().length > 0 && step.step.trim().length < 3) {
                 errors.push(`Technical step ${stepIndex + 1} in objective ${groupIndex + 1} must be at least 3 characters`)
@@ -264,7 +239,8 @@ export function useFormValidation() {
             })
           })
 
-          validationErrors.value[currentKey] = errors.length > 0 ? errors[0] : 'Validation failed'
+          validationErrors.value[currentKey] = errors.length > 0 ? errors[0] : ''
+          return errors.length === 0
         } else if (currentKey === 'api') {
           // Provide specific error messages for API specification
           const apiSpecs = form[currentKey] as Array<{ name: string, endpointUrl: string, contract: { method: string, requestPayload: string, responsePayload: string } }>
@@ -302,9 +278,11 @@ export function useFormValidation() {
             })
           }
 
-          validationErrors.value[currentKey] = errors.length > 0 ? errors[0] : 'Validation failed'
+          validationErrors.value[currentKey] = errors.length > 0 ? errors[0] : ''
+          return errors.length === 0
         } else {
-          validationErrors.value[currentKey] = 'Validation failed'
+          validationErrors.value[currentKey] = ''
+          return true
         }
       }
       return false
@@ -315,35 +293,21 @@ export function useFormValidation() {
     const fieldValue = form[currentKey]
 
     if (currentKey === 'objective') {
-      const objectives = fieldValue as string[]
-      const hasValidObjectives = objectives.length > 0 && objectives.every(obj => obj.trim().length >= 5)
+      // Objectives are optional, so always allow proceeding
       const hasNoError = Boolean(!validationErrors.value[currentKey])
-      return hasValidObjectives && hasNoError
+      return hasNoError
     }
 
     if (currentKey === 'acceptance') {
-      const acceptanceCriteria = fieldValue as Array<{ given: string[], when: string[], then: string[] }>
-      const hasValidCriteria = acceptanceCriteria.length > 0 && acceptanceCriteria.every(criteria =>
-        criteria.given.some(g => g.trim().length >= 3) &&
-        criteria.when.some(w => w.trim().length >= 3) &&
-        criteria.then.some(t => t.trim().length >= 3)
-      )
+      // Acceptance criteria are optional, so always allow proceeding
       const hasNoError = Boolean(!validationErrors.value[currentKey])
-      return hasValidCriteria && hasNoError
+      return hasNoError
     }
 
     if (currentKey === 'tech') {
-      const techSpec = fieldValue as { repository?: string, page?: string, account?: string, stepGroups: Array<{ steps: Array<{ step: string, fileReference?: string }> }> }
-      const hasValidDetails = Boolean(
-        techSpec.repository?.trim() &&
-        techSpec.page?.trim() &&
-        techSpec.account?.trim()
-      )
-      const hasValidSteps = techSpec.stepGroups.every(stepGroup =>
-        stepGroup.steps.some(step => step.step.trim().length >= 3)
-      )
+      // Technical specification is optional, so always allow proceeding
       const hasNoError = Boolean(!validationErrors.value[currentKey])
-      return hasValidDetails && hasValidSteps && hasNoError
+      return hasNoError
     }
 
     if (currentKey === 'api') {
@@ -376,7 +340,7 @@ export function useFormValidation() {
       return hasValidSpecs && hasNoError
     }
 
-        if (currentKey === 'ui') {
+    if (currentKey === 'ui') {
       const uiSpecs = fieldValue as Array<{ name: string, design: string, note?: string }>
       // UI is optional, so if no specs provided, it's valid
       if (!uiSpecs || uiSpecs.length === 0) {
@@ -402,9 +366,9 @@ export function useFormValidation() {
       return hasValidSpecs && hasNoError
     }
 
-    const hasValue = Boolean(fieldValue && typeof fieldValue === 'string' && fieldValue.trim().length > 0)
+    // For any other field, always allow proceeding since all fields are optional
     const hasNoError = Boolean(!validationErrors.value[currentKey])
-    return hasValue && hasNoError
+    return hasNoError
   }
 
   const clearErrors = () => {

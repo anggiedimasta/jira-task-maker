@@ -6,7 +6,7 @@ export function useMarkdownGeneration() {
     let md = ''
 
     // Objective
-    md += `h2. Objective\n`
+    md += `## Objective\n\n`
     if (Array.isArray(form.objective)) {
       form.objective.forEach((obj, index) => {
         if (obj.trim()) {
@@ -19,10 +19,11 @@ export function useMarkdownGeneration() {
     md += '\n'
 
     // Divider after Objective
-    md += `----\n\n`
+    md += `---\n\n`
 
     // Acceptance Criteria
-    md += `h2. Acceptance Criteria\n{code:gherkin}\n`
+    md += `## Acceptance Criteria\n\n`
+    md += '```gherkin\n'
     if (Array.isArray(form.acceptance)) {
       form.acceptance.forEach((criteria, index) => {
         md += `${index + 1}. ${form.objective[index] || `Objective ${index + 1}`}:\n`
@@ -53,42 +54,42 @@ export function useMarkdownGeneration() {
     } else {
       md += `${form.acceptance}\n`
     }
-    md += `{code}\n\n`
+    md += '```\n\n'
 
     // Divider after Acceptance Criteria
-    md += `----\n\n`
+    md += `---\n\n`
 
     // Technical Specification
-    md += `h2. Technical Specification\n\n`
+    md += `## Technical Specification\n\n`
 
     // Technical Details (moved before Technical Steps)
     if (form.tech.figma || form.tech.epicBranch || form.tech.repository || form.tech.page || form.tech.account) {
-      md += `h3. Technical Details\n`
+      md += `### Technical Details\n\n`
       if (form.tech.figma) {
-        md += `*Figma:* ${form.tech.figma}\n`
+        md += `**Figma:** ${form.tech.figma}\n`
       }
       if (form.tech.epicBranch) {
-        md += `*Epic Branch:* ${form.tech.epicBranch}\n`
+        md += `**Epic Branch:** ${form.tech.epicBranch}\n`
       }
       if (form.tech.repository) {
-        md += `*Repository:* ${form.tech.repository}\n`
+        md += `**Repository:** ${form.tech.repository}\n`
       }
       if (form.tech.page) {
-        md += `*Page:* ${form.tech.page}\n`
+        md += `**Page:** ${form.tech.page}\n`
       }
       if (form.tech.account) {
-        md += `*Account:* ${form.tech.account}\n`
+        md += `**Account:** ${form.tech.account}\n`
       }
       md += '\n'
     }
 
     // Technical Steps
     if (form.tech.stepGroups && form.tech.stepGroups.length > 0) {
-      md += `h3. Technical Steps\n`
+      md += `### Technical Steps\n\n`
       form.tech.stepGroups.forEach((stepGroup, groupIndex) => {
         if (stepGroup.steps.some(step => step.step.trim())) {
-          md += `${groupIndex + 1}. ${form.objective[groupIndex] || `Objective ${groupIndex + 1}`}:
-`
+          md += `${groupIndex + 1}. ${form.objective[groupIndex] || `Objective ${groupIndex + 1}`}:\n`
+
           stepGroup.steps.forEach((techStep, stepIndex) => {
             if (techStep.step.trim()) {
               if (techStep.fileReference?.trim()) {
@@ -104,68 +105,74 @@ export function useMarkdownGeneration() {
     }
 
     // Divider after Technical Specification
-    md += `----\n\n`
+    md += `---\n\n`
 
     // API Specification (if provided)
     if (form.api && form.api.length > 0 && form.api.some(api => api.name?.trim())) {
-      md += `h2. API Specification\n\n`
+      md += `## API Specification\n\n`
 
-      // Create table with the three columns
-      md += `||API Name||Endpoint URL||Contract API||\n`
+      // Create JSON format instead of table
+      const apiSpecs = form.api
+        .filter(api => api.name?.trim())
+        .map(api => ({
+          name: api.name,
+          endpointUrl: api.endpointUrl,
+          contract: {
+            method: api.contract.method,
+            requestPayload: api.contract.requestPayload,
+            responsePayload: api.contract.responsePayload
+          }
+        }))
 
-      form.api.forEach(api => {
-        if (api.name?.trim()) {
-          // Create API contract summary
-          const apiContract = `Method: ${api.contract.method}\nRequest: ${api.contract.requestPayload}\nResponse: ${api.contract.responsePayload}`
-
-          md += `|${api.name}|${api.endpointUrl}|{code:json}\n${apiContract}\n{code}|\n`
-        }
-      })
-
-      md += '\n'
+      md += '```json\n'
+      md += JSON.stringify(apiSpecs, null, 2)
+      md += '\n```\n\n'
 
       // Divider after API Specification
-      md += `----\n\n`
+      md += `---\n\n`
     }
 
     // UI Specification (if provided)
     if (form.ui && form.ui.length > 0 && form.ui.some(ui => ui.name?.trim() || ui.design)) {
-      md += `h2. UI Specification\n\n`
+      md += `## UI Specification\n\n`
 
-      // Create table with the three columns
-      md += `||UI Name||Design||Notes||\n`
-
-      form.ui.forEach((ui) => {
-        if (ui.name?.trim() || ui.design) {
+      // Create JSON format instead of table
+      const uiSpecs = form.ui
+        .filter(ui => ui.name?.trim() || ui.design)
+        .map(ui => {
           let designContent = ''
-          let notesContent = ''
 
           // Check if design is a File object
           if (ui.design instanceof File) {
             const fileName = ui.design.name
             const fileSize = (ui.design.size / 1024).toFixed(1) // Convert to KB
-            designContent = `*{color:red}ATTACH IMAGE: ${fileName} (${fileSize} KB){color}*\n*Please attach the binary image file "${fileName}" to this Jira issue*`
+            designContent = `⚠️ ATTACH IMAGE: ${fileName} (${fileSize} KB) - Please attach the binary image file "${fileName}" to this Jira issue`
           } else if (typeof ui.design === 'string' && ui.design.trim()) {
             designContent = ui.design
           }
 
-          if (ui.note?.trim()) {
-            notesContent = ui.note
+          return {
+            name: ui.name || '',
+            design: designContent,
+            notes: ui.note || ''
           }
+        })
 
-          md += `|${ui.name || ''}|${designContent}|${notesContent}|\n`
-        }
-      })
-
-      md += '\n'
+      md += '```json\n'
+      md += JSON.stringify(uiSpecs, null, 2)
+      md += '\n```\n\n'
 
       // Divider after UI Specification
-      md += `----\n\n`
+      md += `---\n\n`
     }
 
     // Additional Notes (if provided)
     if (form.notes?.trim()) {
-      md += `h2. Additional Notes\n${form.notes}\n\n`
+      md += `## Additional Notes\n\n`
+      md += `<details>\n`
+      md += `<summary>Click to expand notes</summary>\n\n`
+      md += `${form.notes}\n\n`
+      md += `</details>\n\n`
     }
 
     const finalMarkdown = md.trim()
@@ -173,7 +180,7 @@ export function useMarkdownGeneration() {
       totalLength: finalMarkdown.length,
       containsFileReferences: finalMarkdown.includes('ATTACH IMAGE:'),
       fileReferenceCount: (finalMarkdown.match(/ATTACH IMAGE:/g) || []).length,
-      dividerCount: (finalMarkdown.match(/----/g) || []).length
+      dividerCount: (finalMarkdown.match(/---/g) || []).length
     })
     return finalMarkdown
   }

@@ -56,17 +56,17 @@ export function useFormState() {
     {
       label: 'Objective',
       key: 'objective',
-      description: 'Describe what needs to be accomplished'
+      description: 'Describe what needs to be accomplished (optional)'
     },
     {
       label: 'Acceptance Criteria',
       key: 'acceptance',
-      description: 'Define the acceptance criteria using Given-When-Then format'
+      description: 'Define the acceptance criteria using Given-When-Then format (optional)'
     },
     {
       label: 'Technical Specification',
       key: 'tech',
-      description: 'Provide technical details, architecture, and implementation approach'
+      description: 'Provide technical details, architecture, and implementation approach (optional)'
     },
     {
       label: 'API Specification',

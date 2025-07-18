@@ -126,78 +126,29 @@ const tabs = [
 ]
 
 const markdownPreview = computed(() => {
-  let markdown = props.markdown
+  const markdown = props.markdown
 
-  // Convert Jira tables to HTML tables
-  const tableRegex = /(\|\|[^|]+\|[^|]*\|[^|]*\|\|[\s\S]*?)(?=\n\n|\n$|$)/g
-  markdown = markdown.replace(tableRegex, (match) => {
-    const lines = match.trim().split('\n')
-    if (lines.length < 2) return match
-
-    const headerLine = lines[0]
-    const dataLines = lines.slice(1)
-
-    // Parse header
-    const headerMatch = headerLine.match(/\|\|([^|]+)\|\|([^|]*)\|\|([^|]*)\|\|/)
-    if (!headerMatch) return match
-
-    let html = '<table><thead><tr>'
-    html += `<th>${headerMatch[1].trim()}</th>`
-    html += `<th>${headerMatch[2].trim()}</th>`
-    html += `<th>${headerMatch[3].trim()}</th>`
-    html += '</tr></thead><tbody>'
-
-    // Parse data rows
-    dataLines.forEach(line => {
-      const dataMatch = line.match(/\|([^|]+)\|([^|]*)\|([^|]*)\|/)
-      if (dataMatch) {
-        html += '<tr>'
-        html += `<td>${dataMatch[1].trim()}</td>`
-        html += `<td>${dataMatch[2].trim()}</td>`
-        html += `<td>${dataMatch[3].trim()}</td>`
-        html += '</tr>'
-      }
-    })
-
-    html += '</tbody></table>'
-    return html
-  })
-
-  // Enhanced text to HTML conversion for preview with Jira text formatting support
+  // Enhanced text to HTML conversion for preview with standard markdown support
   const result = markdown
-    // Jira headings (process in order from largest to smallest) - use word boundaries to be more specific
-    .replace(/^h6\.\s+(.*)$/gim, '<h6>$1</h6>')
-    .replace(/^h5\.\s+(.*)$/gim, '<h5>$1</h5>')
-    .replace(/^h4\.\s+(.*)$/gim, '<h4>$1</h4>')
-    .replace(/^h3\.\s+(.*)$/gim, '<h3>$1</h3>')
-    .replace(/^h2\.\s+(.*)$/gim, '<h2>$1</h2>')
-    .replace(/^h1\.\s+(.*)$/gim, '<h1>$1</h1>')
-    // Jira code blocks (process BEFORE text effects to avoid conflicts)
-    .replace(/\{code:(\w+)\}([\s\S]*?)\{code\}/gim, '<pre><code class="language-$1">$2</code></pre>')
-    .replace(/\{code\}([\s\S]*?)\{code\}/gim, '<pre><code>$1</code></pre>')
-    // Jira quotes
-    .replace(/\{quote\}([\s\S]*?)\{quote\}/gim, '<blockquote>$1</blockquote>')
-    .replace(/^bq\. (.*$)/gim, '<blockquote>$1</blockquote>')
-    // Jira color formatting
-    .replace(/\{color:red\}([^}]*)\{color\}/g, '<span style="color: red;">$1</span>')
-    .replace(/\{color:([^}]+)\}([^}]*)\{color\}/g, '<span style="color: $1;">$2</span>')
-    // Jira text effects (process AFTER code blocks to avoid conflicts)
-    .replace(/\*([^*]+)\*/g, '<strong>$1</strong>') // strong
-    .replace(/_([^_]+)_/g, '<em>$1</em>') // emphasis
-    .replace(/\{\{([^}]+)\}\}/g, '<code>$1</code>') // monospaced
-    .replace(/\+\+([^+]+)\+\+/g, '<ins>$1</ins>') // inserted
-    // .replace(/(?<!\w)--([^-]+)--(?!\w)/g, '<del>$1</del>') // deleted - commented out to avoid conflicts
-    .replace(/\^([^^]+)\^/g, '<sup>$1</sup>') // superscript
-    .replace(/~([^~]+)~/g, '<sub>$1</sub>') // subscript
-    // Jira lists
-    .replace(/^\* (.*$)/gim, '<li>$1</li>')
-    .replace(/^- (.*$)/gim, '<li>$1</li>')
-    .replace(/^# (.*$)/gim, '<li>$1</li>')
-    // Jira images
-    .replace(/!([^!]+)!/g, '<img src="$1" alt="Image" style="max-width: 100%; height: auto;">')
-    .replace(/!([^|]+)\|([^!]+)!/g, '<img src="$1" alt="Image" style="max-width: 100%; height: auto;" $2>')
-    // Horizontal dividers
-    .replace(/^----$/gm, '<hr style="border: none; border-top: 2px solid #ccc; margin: 20px 0;">')
+    // Standard markdown headings (process in order from largest to smallest)
+    .replace(/^###\s+(.*)$/gim, '<h3>$1</h3>')
+    .replace(/^##\s+(.*)$/gim, '<h2>$1</h2>')
+    .replace(/^#\s+(.*)$/gim, '<h1>$1</h1>')
+    // Standard markdown code blocks (process BEFORE text effects to avoid conflicts)
+    .replace(/```(\w+)\n([\s\S]*?)```/gim, '<pre><code class="language-$1">$2</code></pre>')
+    .replace(/```\n([\s\S]*?)```/gim, '<pre><code>$1</code></pre>')
+    // Standard markdown text effects (process AFTER code blocks to avoid conflicts)
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>') // bold
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>') // italic
+    .replace(/`([^`]+)`/g, '<code>$1</code>') // inline code
+    // Standard markdown lists
+    .replace(/^\d+\.\s+(.*$)/gim, '<li>$1</li>') // ordered lists
+    .replace(/^\*\s+(.*$)/gim, '<li>$1</li>') // unordered lists
+    .replace(/^-\s+(.*$)/gim, '<li>$1</li>') // unordered lists
+        // Horizontal dividers
+    .replace(/^---$/gm, '<hr style="border: none; border-top: 2px solid #ccc; margin: 20px 0;">')
+    // Collapsible details (HTML details/summary)
+    .replace(/<details>\n<summary>([^<]+)<\/summary>\n\n([\s\S]*?)<\/details>/gim, '<details><summary>$1</summary><div style="margin-top: 1rem; padding-left: 1rem; border-left: 3px solid #e5e7eb;">$2</div></details>')
     // Line breaks
     .replace(/\n\n/g, '<br><br>')
     .replace(/\n/g, '<br>')
@@ -429,6 +380,43 @@ const handleEdit = () => {
   margin: 0.5rem 0;
   overflow-x: auto;
   border: 1px solid #374151;
+}
+
+/* Collapsible details styling */
+.markdown-preview details {
+  margin: 1rem 0;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.markdown-preview details summary {
+  background-color: #f9fafb;
+  padding: 1rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 1px solid #e5e7eb;
+  transition: background-color 0.2s ease;
+}
+
+.markdown-preview details summary:hover {
+  background-color: #f3f4f6;
+}
+
+.markdown-preview details summary::-webkit-details-marker {
+  color: #6b7280;
+  margin-right: 0.5rem;
+}
+
+.markdown-preview details[open] summary {
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.markdown-preview details > div {
+  padding: 1rem;
+  background-color: white;
+  line-height: 1.6;
 }
 
 .markdown-preview td pre code {
@@ -692,6 +680,7 @@ const handleEdit = () => {
   font-weight: 500;
   border-bottom: 2px solid transparent;
   transition: all 0.2s;
+  border-radius: 0.375rem 0.375rem 0 0;
 }
 
 .tab-btn:hover {
@@ -734,50 +723,7 @@ const handleEdit = () => {
   overflow-y: auto;
 }
 
-.prose {
-  color: #374151;
-  line-height: 1.6;
-}
 
-.prose h1 {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  margin-top: 2rem;
-  color: #1f2937;
-  border-bottom: 2px solid #e5e7eb;
-  padding-bottom: 0.5rem;
-}
-
-.prose h2 {
-  font-size: 1.5rem;
-  font-weight: 600;
-  margin-bottom: 0.75rem;
-  margin-top: 1.5rem;
-  color: #374151;
-  border-bottom: 1px solid #e5e7eb;
-  padding-bottom: 0.25rem;
-}
-
-.prose h3 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  margin-top: 1.25rem;
-  color: #4b5563;
-}
-
-.prose strong {
-  font-weight: 600;
-}
-
-.prose em {
-  font-style: italic;
-}
-
-.prose li {
-  margin-bottom: 0.25rem;
-}
 
 .modal-actions {
   display: flex;

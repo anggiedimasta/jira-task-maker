@@ -1,15 +1,30 @@
 <template>
   <div class="form-wizard">
     <div class="flex gap-6 min-h-screen">
-      <!-- Left Section - Notes -->
+      <!-- Left Section - Notes (Collapsible) -->
       <div
-        class="w-1/3 bg-gray-50 p-6 border-r border-gray-200 sticky top-0 h-screen overflow-hidden"
+        class="transition-all duration-300 ease-in-out bg-gray-50 border-r border-gray-200 sticky top-0 h-screen overflow-hidden"
+        :class="notesCollapsed ? 'w-0 p-0' : 'w-1/3 p-6'"
       >
-        <NotesSection
-          v-model="form.notes"
-          :error="getFieldError('notes')"
-        />
+        <div v-if="!notesCollapsed" class="h-full">
+          <NotesSection
+            v-model="form.notes"
+            :error="getFieldError('notes')"
+          />
+        </div>
       </div>
+
+      <!-- Toggle Button for Notes -->
+      <button
+        class="fixed left-0 top-1/2 transform -translate-y-1/2 z-10 bg-blue-600 text-white p-2 rounded-r-lg shadow-lg hover:bg-blue-700 transition-colors duration-200"
+        :class="notesCollapsed ? 'left-0' : 'left-1/3'"
+        @click="toggleNotes"
+      >
+        <UIcon
+          :name="notesCollapsed ? 'i-heroicons-arrow-right' : 'i-heroicons-arrow-left'"
+          class="w-4 h-4"
+        />
+      </button>
 
       <!-- Right Section - Form Wizard -->
       <div class="flex-1 p-6">
@@ -150,7 +165,7 @@
 
 
 <script setup lang="ts">
-import { computed, watch } from 'vue'
+import { computed, watch, ref } from 'vue'
 import { useFormState } from '~/composables/useFormState'
 import { useFormValidation } from '~/composables/useFormValidation'
 import { useMarkdownGeneration } from '~/composables/useMarkdownGeneration'
@@ -166,6 +181,9 @@ import NotesSection from '~/components/form-phases/NotesSection.vue'
 
 // Modal state
 const { openModal } = useModalState()
+
+// Notes sidebar state
+const notesCollapsed = ref(false)
 
 // Use composables
 const {
@@ -199,6 +217,10 @@ const markdown = computed(() => {
 })
 
 // Methods
+const toggleNotes = () => {
+  notesCollapsed.value = !notesCollapsed.value
+}
+
 const handleNextStep = () => {
   const currentKey = getCurrentStep().key
 

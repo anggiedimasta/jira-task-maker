@@ -19,9 +19,8 @@
       </UFormField>
 
       <UFormField
-        label="Repository *"
+        label="Repository (Optional)"
         :error="error"
-        :class="{ 'error-field': error }"
       >
         <UInput
           v-model="techData.repository"
@@ -31,9 +30,8 @@
       </UFormField>
 
       <UFormField
-        label="Page URL *"
+        label="Page URL (Optional)"
         :error="error"
-        :class="{ 'error-field': error }"
       >
         <UInput
           v-model="techData.page"
@@ -43,9 +41,8 @@
       </UFormField>
 
       <UFormField
-        label="Account *"
+        label="Account (Optional)"
         :error="error"
-        :class="{ 'error-field': error }"
       >
         <UInput
           v-model="techData.account"
@@ -60,9 +57,8 @@
 
     <!-- Technical Steps -->
     <UFormField
-      label="Technical Steps *"
+      label="Technical Steps (Optional)"
       :error="error"
-      :class="{ 'error-field': error }"
     >
       <div class="space-y-6">
         <div

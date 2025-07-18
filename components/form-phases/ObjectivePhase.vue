@@ -1,9 +1,8 @@
 <template>
   <div class="space-y-4">
     <UFormField
-      label="Objectives"
+      label="Objectives (Optional)"
       :error="error"
-      :class="{ 'error-field': error }"
       class="text-gray-500"
     >
       <div class="space-y-3">

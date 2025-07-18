@@ -1,9 +1,8 @@
 <template>
   <div class="space-y-6">
     <UFormField
-      label="Acceptance Criteria"
+      label="Acceptance Criteria (Optional)"
       :error="error"
-      :class="{ 'error-field': error }"
       class="text-gray-500"
     >
       <div class="space-y-6">
@@ -18,7 +17,7 @@
 
           <!-- Given Conditions -->
           <div class="space-y-3 mb-4">
-            <label class="text-sm font-medium text-gray-500">Given (Context) *:</label>
+            <label class="text-sm font-medium text-gray-500">Given (Context) (Optional):</label>
             <div class="space-y-2">
               <div
                 v-for="(given, givenIndex) in criteria.given"
@@ -58,7 +57,7 @@
 
           <!-- When Conditions -->
           <div class="space-y-3 mb-4">
-            <label class="text-sm font-medium text-gray-500">When (Action) *:</label>
+            <label class="text-sm font-medium text-gray-500">When (Action) (Optional):</label>
             <div class="space-y-2">
               <div
                 v-for="(when, whenIndex) in criteria.when"
@@ -98,7 +97,7 @@
 
           <!-- Then Conditions -->
           <div class="space-y-3">
-            <label class="text-sm font-medium text-gray-500">Then (Expected Result) *:</label>
+            <label class="text-sm font-medium text-gray-500">Then (Expected Result) (Optional):</label>
             <div class="space-y-2">
               <div
                 v-for="(then, thenIndex) in criteria.then"
