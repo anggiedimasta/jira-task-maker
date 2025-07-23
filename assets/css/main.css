@@ -1,6 +1,8 @@
-@import "tailwindcss";
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
 
-/* CSS Variables for Tailwind v4 - Navy Blue Primary Color */
+/* CSS Variables for Tailwind v3 - Navy Blue Primary Color */
 :root {
   --color-primary-50: #f0f4ff;
   --color-primary-100: #e0e9ff;

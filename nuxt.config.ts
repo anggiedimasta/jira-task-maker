@@ -1,6 +1,4 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
-import tailwindcss from "@tailwindcss/vite";
-
 export default defineNuxtConfig({
   css: ['~/assets/css/main.css'],
   compatibilityDate: '2025-05-15',
@@ -20,7 +18,7 @@ export default defineNuxtConfig({
     '@nuxt/fonts',
     '@nuxt/icon',
     '@nuxt/image',
-    '@nuxt/ui',
+    '@nuxtjs/tailwindcss',
   ],
 
   // Font optimization
@@ -65,9 +63,6 @@ export default defineNuxtConfig({
 
   // Vite optimizations
   vite: {
-    plugins: [
-      tailwindcss(),
-    ],
     build: {
       // Chunk size optimization
       chunkSizeWarningLimit: 1000,
@@ -76,14 +71,13 @@ export default defineNuxtConfig({
           manualChunks: {
             // Split vendor libraries
             'vendor-vue': ['vue', 'vue-router'],
-            'vendor-ui': ['@nuxt/ui'],
             'vendor-utils': ['zod']
           }
         }
       }
     },
     optimizeDeps: {
-      include: ['vue', 'vue-router', '@nuxt/ui'],
+      include: ['vue', 'vue-router'],
     },
   },
 
