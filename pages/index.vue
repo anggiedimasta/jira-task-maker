@@ -13,13 +13,13 @@
           </div>
 
           <!-- Preview Example Button -->
-          <button
-            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200"
+          <UButton
             @click="handlePreviewExample"
+            icon="i-heroicons-eye"
+            color="primary"
           >
-            <UIcon name="i-heroicons-eye" class="w-4 h-4 mr-2" />
             Preview Example
-          </button>
+          </UButton>
         </div>
       </div>
     </header>
@@ -27,8 +27,10 @@
     <!-- Main Content -->
     <main class="py-8">
       <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Form Wizard -->
-        <FormWizard />
+        <!-- Form Wizard - Lazy loaded for better performance -->
+        <ClientOnly fallback-tag="div" fallback="Loading...">
+          <LazyFormWizard />
+        </ClientOnly>
       </div>
     </main>
 
@@ -44,243 +46,135 @@
       </div>
     </footer>
 
-    <!-- Global Modal -->
-    <ResultsModal
-      :model-value="showModal"
-      :markdown="modalMarkdown"
-      :copied="modalCopied"
-      @update:model-value="(value) => showModal = value"
-      @download="handleDownload"
-      @copy="handleCopy"
-      @reset="handleReset"
-      @edit="handleEdit"
-    />
+    <!-- Global Modal - Lazy loaded -->
+    <ClientOnly>
+      <LazyResultsModal
+        :model-value="showModal"
+        :markdown="modalMarkdown"
+        :copied="copied"
+        @update:model-value="showModal = $event"
+        @download="handleDownload"
+        @copy="handleCopy"
+        @reset="handleReset"
+        @edit="handleEdit"
+      />
+    </ClientOnly>
   </div>
 </template>
 
 <script setup lang="ts">
+// SEO and meta optimizations
+useSeoMeta({
+  title: 'Jira Task Maker - Professional Task Creation Tool',
+  ogTitle: 'Jira Task Maker - Professional Task Creation Tool',
+  description: 'Create well-structured Jira tasks with ease using our professional templates and guided workflow.',
+  ogDescription: 'Create well-structured Jira tasks with ease using our professional templates and guided workflow.',
+  ogImage: '/og-image.jpg',
+  twitterCard: 'summary_large_image',
+})
 
-import FormWizard from '~/components/FormWizard.vue'
-import ResultsModal from '~/components/form-phases/ResultsModal.vue'
-import { useModalState } from '~/composables/useModalState'
-import { useMarkdownGeneration } from '~/composables/useMarkdownGeneration'
-import { useClipboardUtils } from '~/composables/useClipboardUtils'
+// Performance optimizations
+definePageMeta({
+  mode: 'spa' // Client-side rendering for better interactivity
+})
 
-const { showModal, modalMarkdown, modalCopied, closeModal, setModalCopied, openModal } = useModalState()
-const { downloadMarkdown, generateMarkdown } = useMarkdownGeneration()
-const { copyToClipboard } = useClipboardUtils()
+// Reactive state
+const showModal = ref(false)
+const modalMarkdown = ref('')
+const copied = ref(false)
 
-// Mock data for preview example
-const generateMockData = () => {
-  return {
-    objective: [
-      'Implement user authentication system with JWT tokens',
-      'Create user profile management functionality',
-      'Add role-based access control (RBAC)'
-    ],
-    acceptance: [
-      {
-        given: [
-          'User is not authenticated',
-          'User has valid credentials'
-        ],
-        when: [
-          'User submits login form',
-          'System validates credentials'
-        ],
-        then: [
-          'System returns JWT token',
-          'User is redirected to dashboard',
-          'Session is maintained for 24 hours'
-        ]
-      },
-      {
-        given: [
-          'User is authenticated',
-          'User profile page exists'
-        ],
-        when: [
-          'User navigates to profile page',
-          'User updates profile information'
-        ],
-        then: [
-          'Profile information is displayed',
-          'Changes are saved to database',
-          'Success message is shown'
-        ]
-      },
-      {
-        given: [
-          'User has admin role',
-          'RBAC system is configured'
-        ],
-        when: [
-          'User accesses admin panel',
-          'User assigns roles to other users'
-        ],
-        then: [
-          'Admin panel is accessible',
-          'Role assignments are saved',
-          'Audit log is updated'
-        ]
-      }
-    ],
-    tech: {
-      stepGroups: [
-        {
-          steps: [
-            {
-              step: 'Set up JWT authentication middleware',
-              fileReference: 'middleware/auth.js'
-            },
-            {
-              step: 'Create login API endpoint',
-              fileReference: 'api/auth/login.js'
-            },
-            {
-              step: 'Implement token validation',
-              fileReference: 'utils/jwt.js'
-            }
-          ]
-        },
-        {
-          steps: [
-            {
-              step: 'Create user profile component',
-              fileReference: 'components/UserProfile.vue'
-            },
-            {
-              step: 'Implement profile update API',
-              fileReference: 'api/users/profile.js'
-            },
-            {
-              step: 'Add form validation',
-              fileReference: 'utils/validation.js'
-            }
-          ]
-        },
-        {
-          steps: [
-            {
-              step: 'Design RBAC database schema',
-              fileReference: 'migrations/rbac_schema.sql'
-            },
-            {
-              step: 'Create role management API',
-              fileReference: 'api/admin/roles.js'
-            },
-            {
-              step: 'Implement permission checking',
-              fileReference: 'utils/permissions.js'
-            }
-          ]
-        }
-      ],
-      figma: 'https://www.figma.com/file/example/auth-system-design',
-      epicBranch: 'feature/user-authentication-system',
-      repository: 'https://github.com/company/auth-system',
-      page: '/auth',
-      account: 'admin@company.com'
-    },
-    api: [
-      {
-        name: 'Login API',
-        endpointUrl: '/api/auth/login',
-        contract: {
-          method: 'POST',
-          requestPayload: '{\n  "email": "user@example.com",\n  "password": "securepassword"\n}',
-          responsePayload: '{\n  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",\n  "user": {\n    "id": 1,\n    "email": "user@example.com",\n    "role": "user"\n  }\n}'
-        }
-      },
-      {
-        name: 'Update Profile API',
-        endpointUrl: '/api/users/profile',
-        contract: {
-          method: 'PUT',
-          requestPayload: '{\n  "name": "John Doe",\n  "avatar": "data:image/jpeg;base64,...",\n  "bio": "Software developer"\n}',
-          responsePayload: '{\n  "success": true,\n  "user": {\n    "id": 1,\n    "name": "John Doe",\n    "avatar": "https://example.com/avatars/1.jpg",\n    "bio": "Software developer"\n  }\n}'
-        }
-      }
-    ],
-    ui: [
-      {
-        name: 'Login Form',
-        design: '⚠️ ATTACH IMAGE: login-form-mockup.png (156.7 KB) - Please attach the binary image file "login-form-mockup.png" to this Jira issue',
-        note: 'Responsive design with dark mode support'
-      },
-      {
-        name: 'User Profile Page',
-        design: '⚠️ ATTACH IMAGE: profile-page-mockup.png (203.4 KB) - Please attach the binary image file "profile-page-mockup.png" to this Jira issue',
-        note: 'Include avatar upload functionality'
-      },
-      {
-        name: 'Admin Panel',
-        design: '⚠️ ATTACH IMAGE: admin-panel-mockup.png (189.2 KB) - Please attach the binary image file "admin-panel-mockup.png" to this Jira issue',
-        note: 'Role management interface with drag-and-drop'
-      }
-    ],
-    notes: 'This task is part of the larger authentication system overhaul. Dependencies include:\n\n- Database migration for user roles\n- Frontend routing updates\n- Security audit completion\n- Performance testing for JWT token validation\n\nTesting requirements:\n- Unit tests for all API endpoints\n- Integration tests for authentication flow\n- E2E tests for user journey\n- Security penetration testing'
+// Lazy imports for better code splitting
+const LazyFormWizard = defineAsyncComponent(() => import('~/components/FormWizard.vue'))
+const LazyResultsModal = defineAsyncComponent(() => import('~/components/form-phases/ResultsModal.vue'))
+
+// Event handlers
+const handlePreviewExample = () => {
+  // Sample markdown for preview
+  modalMarkdown.value = `# Sample Jira Task
+
+## Objective
+Create a responsive user authentication system with modern security practices.
+
+## Acceptance Criteria
+- [ ] User can login with email and password
+- [ ] Password reset functionality via email
+- [ ] Session management with JWT tokens
+- [ ] Rate limiting for login attempts
+
+## Technical Requirements
+- Use Vue 3 with TypeScript
+- Implement OAuth 2.0 integration
+- Add unit tests with 90% coverage
+
+## API Requirements
+\`\`\`json
+{
+  "endpoint": "/api/auth/login",
+  "method": "POST",
+  "body": {
+    "email": "user@example.com",
+    "password": "securePassword"
   }
 }
+\`\`\`
 
-const handlePreviewExample = () => {
-  const mockData = generateMockData()
-  const mockMarkdown = generateMarkdown(mockData)
-  openModal(mockMarkdown)
+## UI/UX Requirements
+- Mobile-first responsive design
+- Loading states and error handling
+- Accessibility compliance (WCAG 2.1)
+`
+  showModal.value = true
 }
 
 const handleDownload = () => {
-  const { add } = useToast()
-  downloadMarkdown(modalMarkdown.value)
-  add({
-    title: 'Download Started',
-    description: 'Markdown file download initiated',
-    color: 'success'
-  })
+  if (!modalMarkdown.value) return
+  
+  const blob = new Blob([modalMarkdown.value], { type: 'text/markdown' })
+  const url = URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = 'jira-task.md'
+  document.body.appendChild(a)
+  a.click()
+  document.body.removeChild(a)
+  URL.revokeObjectURL(url)
 }
 
 const handleCopy = async () => {
-  const { add } = useToast()
-
-  // Check if markdown contains file references
-  const hasImages = modalMarkdown.value.includes('ATTACH IMAGE:')
-  const imageCount = (modalMarkdown.value.match(/ATTACH IMAGE:/g) || []).length
-
-  console.log('Copying markdown with file references:', {
-    hasImages,
-    imageCount,
-    markdownLength: modalMarkdown.value.length,
-    containsFileReferences: modalMarkdown.value.includes('ATTACH IMAGE:')
-  })
-
-  const success = await copyToClipboard(modalMarkdown.value)
-  if (success) {
-    setModalCopied(true)
-    const message = hasImages
-      ? `Markdown copied to clipboard with ${imageCount} file reference${imageCount > 1 ? 's' : ''}!`
-      : 'Markdown copied to clipboard!'
-    add({
-      title: 'Success',
-      description: message,
-      color: 'success'
-    })
-    setTimeout(() => setModalCopied(false), 3000)
-  } else {
-    add({
-      title: 'Error',
-      description: 'Failed to copy to clipboard',
-      color: 'error'
-    })
+  if (!modalMarkdown.value) return
+  
+  try {
+    await navigator.clipboard.writeText(modalMarkdown.value)
+    copied.value = true
+    setTimeout(() => {
+      copied.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('Failed to copy to clipboard:', err)
   }
 }
 
 const handleReset = () => {
-  closeModal()
-  // Reset form logic will be handled by FormWizard
+  showModal.value = false
+  modalMarkdown.value = ''
+  // Add reset logic for form wizard if needed
 }
 
 const handleEdit = () => {
-  closeModal()
-  // Edit logic will be handled by FormWizard
+  showModal.value = false
+  // Add edit logic to focus back on form wizard
 }
+
+// Listen for form wizard events
+const handleFormComplete = (markdown: string) => {
+  modalMarkdown.value = markdown
+  showModal.value = true
+}
+
+// Provide form complete handler to child components
+provide('onFormComplete', handleFormComplete)
 </script>
+
+<style scoped>
+/* Optimized styles using Tailwind utilities */
+</style>

@@ -7,7 +7,7 @@
         :class="notesCollapsed ? 'w-0 p-0' : 'w-1/3 p-6'"
       >
         <div v-if="!notesCollapsed" class="h-full">
-          <NotesSection
+          <LazyNotesSection
             v-model="form.notes"
             :error="getFieldError('notes')"
           />
@@ -15,16 +15,14 @@
       </div>
 
       <!-- Toggle Button for Notes -->
-      <button
-        class="fixed left-0 top-1/2 transform -translate-y-1/2 z-10 bg-blue-600 text-white p-2 rounded-r-lg shadow-lg hover:bg-blue-700 transition-colors duration-200"
+      <UButton
         :class="notesCollapsed ? 'left-0' : 'left-1/3'"
+        class="fixed left-0 top-1/2 transform -translate-y-1/2 z-10 transition-all"
         @click="toggleNotes"
-      >
-        <UIcon
-          :name="notesCollapsed ? 'i-heroicons-arrow-right' : 'i-heroicons-arrow-left'"
-          class="w-4 h-4"
-        />
-      </button>
+        :icon="notesCollapsed ? 'i-heroicons-arrow-right' : 'i-heroicons-arrow-left'"
+        size="sm"
+        color="primary"
+      />
 
       <!-- Right Section - Form Wizard -->
       <div class="flex-1 p-6">
@@ -64,7 +62,7 @@
             </div>
           </div>
 
-          <!-- Form Steps -->
+          <!-- Form Steps - Lazy loaded components -->
           <div v-if="step < steps.length">
             <div class="space-y-6">
               <!-- Step Content -->
@@ -73,48 +71,14 @@
                   {{ steps[step].label }}
                 </h3>
 
-                <!-- Dynamic Form Fields -->
-                <div v-if="steps[step].key === 'objective'" class="space-y-4">
-                  <ObjectivePhase
-                    v-model="form.objective"
-                    :error="getFieldError('objective')"
+                <!-- Dynamic Form Fields - Lazy loaded -->
+                <KeepAlive>
+                  <component 
+                    :is="currentStepComponent"
+                    v-model="currentStepValue"
+                    v-bind="currentStepProps"
                   />
-                </div>
-
-                <div
-                  v-else-if="steps[step].key === 'acceptance'"
-                  class="space-y-6"
-                >
-                  <AcceptancePhase
-                    v-model="form.acceptance"
-                    :objectives="form.objective"
-                    :error="getFieldError('acceptance')"
-                  />
-                </div>
-
-                <div v-else-if="steps[step].key === 'tech'" class="space-y-6">
-                  <TechnicalPhase
-                    v-model="form.tech"
-                    :objectives="form.objective"
-                    :error="getFieldError('tech')"
-                  />
-                </div>
-
-                <div v-else-if="steps[step].key === 'api'" class="space-y-6">
-                  <ApiPhase
-                    v-model="form.api"
-                    :error="getFieldError('api')"
-                  />
-                </div>
-
-                <div v-else-if="steps[step].key === 'ui'" class="space-y-6">
-                  <UiPhase
-                    v-model="form.ui"
-                    :error="getFieldError('ui')"
-                    :get-name-field-error="getUiNameFieldError"
-                    :get-design-field-error="getUiDesignFieldError"
-                  />
-                </div>
+                </KeepAlive>
 
                 <p
                   v-if="steps[step].description"
@@ -130,30 +94,21 @@
               <UButton
                 v-if="!isFirstStep"
                 variant="outline"
-                class="text-gray-500"
                 @click="previousStep"
+                icon="i-heroicons-arrow-left"
               >
-                <UIcon name="i-heroicons-arrow-left" class="w-4 h-4 mr-2" />
                 Back
               </UButton>
               <div v-else />
 
               <UButton
-                :color="isLastStep ? 'success' : 'primary'"
-                class="navy-primary text-gray-500"
+                :color="isLastStep ? 'green' : 'primary'"
                 @click="handleNextStep"
+                :loading="isGenerating"
+                :icon="isLastStep ? 'i-heroicons-document-text' : 'i-heroicons-arrow-right'"
+                :icon-trailing="!isLastStep"
               >
-                <template v-if="isLastStep">
-                  <UIcon
-                    name="i-heroicons-document-text"
-                    class="w-4 h-4 mr-2"
-                  />
-                  <span>Generate Jira Task</span>
-                </template>
-                <template v-else>
-                  <span>Next</span>
-                  <UIcon name="i-heroicons-arrow-right" class="w-4 h-4 ml-2" />
-                </template>
+                {{ isLastStep ? 'Generate Jira Task' : 'Next' }}
               </UButton>
             </div>
           </div>
@@ -163,27 +118,40 @@
   </div>
 </template>
 
-
 <script setup lang="ts">
-import { computed, watch, ref } from 'vue'
-import { useFormState } from '~/composables/useFormState'
-import { useFormValidation } from '~/composables/useFormValidation'
-import { useMarkdownGeneration } from '~/composables/useMarkdownGeneration'
-import { useModalState } from '~/composables/useModalState'
+import { usePerformance } from '~/composables/usePerformance'
 
-// Import form phase components
-import ObjectivePhase from '~/components/form-phases/ObjectivePhase.vue'
-import AcceptancePhase from '~/components/form-phases/AcceptancePhase.vue'
-import TechnicalPhase from '~/components/form-phases/TechnicalPhase.vue'
-import ApiPhase from '~/components/form-phases/ApiPhase.vue'
-import UiPhase from '~/components/form-phases/UiPhase.vue'
-import NotesSection from '~/components/form-phases/NotesSection.vue'
+// Performance monitoring
+const { markStart, markEnd, measureComponentLoad } = usePerformance()
 
-// Modal state
-const { openModal } = useModalState()
+// Lazy import form phase components for better code splitting
+const LazyNotesSection = defineAsyncComponent(() => 
+  measureComponentLoad('NotesSection', () => import('~/components/form-phases/NotesSection.vue'))
+)
+
+const LazyObjectivePhase = defineAsyncComponent(() => 
+  measureComponentLoad('ObjectivePhase', () => import('~/components/form-phases/ObjectivePhase.vue'))
+)
+
+const LazyAcceptancePhase = defineAsyncComponent(() => 
+  measureComponentLoad('AcceptancePhase', () => import('~/components/form-phases/AcceptancePhase.vue'))
+)
+
+const LazyTechnicalPhase = defineAsyncComponent(() => 
+  measureComponentLoad('TechnicalPhase', () => import('~/components/form-phases/TechnicalPhase.vue'))
+)
+
+const LazyApiPhase = defineAsyncComponent(() => 
+  measureComponentLoad('ApiPhase', () => import('~/components/form-phases/ApiPhase.vue'))
+)
+
+const LazyUiPhase = defineAsyncComponent(() => 
+  measureComponentLoad('UiPhase', () => import('~/components/form-phases/UiPhase.vue'))
+)
 
 // Notes sidebar state
 const notesCollapsed = ref(false)
+const isGenerating = ref(false)
 
 // Use composables
 const {
@@ -195,25 +163,75 @@ const {
   isLastStep,
   nextStep,
   previousStep,
-  setCopied,
   getCurrentStep
 } = useFormState()
 
 const {
-  validateField,
   getFieldError,
   getUiNameFieldError,
   getUiDesignFieldError,
   validateCurrentStep,
 } = useFormValidation()
 
-const {
-  generateMarkdown
-} = useMarkdownGeneration()
-const { copyToClipboard } = useClipboardUtils()
+const { generateMarkdown } = useMarkdownGeneration()
 
-const markdown = computed(() => {
-  return generateMarkdown(form.value)
+// Optimized computed properties with proper caching
+const currentStepComponent = computed(() => {
+  const stepKey = steps.value[step.value]?.key
+  
+  switch (stepKey) {
+    case 'objective': return LazyObjectivePhase
+    case 'acceptance': return LazyAcceptancePhase
+    case 'tech': return LazyTechnicalPhase
+    case 'api': return LazyApiPhase
+    case 'ui': return LazyUiPhase
+    default: return null
+  }
+})
+
+const currentStepValue = computed({
+  get() {
+    const stepKey = steps.value[step.value]?.key
+    if (!stepKey) return null
+    return form.value[stepKey as keyof typeof form.value]
+  },
+  set(value) {
+    const stepKey = steps.value[step.value]?.key
+    if (stepKey && value !== null) {
+      form.value[stepKey as keyof typeof form.value] = value
+    }
+  }
+})
+
+const currentStepProps = computed(() => {
+  const stepKey = steps.value[step.value]?.key
+  
+  switch (stepKey) {
+    case 'acceptance':
+      return {
+        objectives: form.value.objective,
+        error: getFieldError('acceptance')
+      }
+    case 'tech':
+      return {
+        objectives: form.value.objective,
+        error: getFieldError('tech')
+      }
+    case 'api':
+      return {
+        error: getFieldError('api')
+      }
+    case 'ui':
+      return {
+        error: getFieldError('ui'),
+        'get-name-field-error': getUiNameFieldError,
+        'get-design-field-error': getUiDesignFieldError
+      }
+    default:
+      return {
+        error: getFieldError(stepKey || '')
+      }
+  }
 })
 
 // Methods
@@ -221,55 +239,39 @@ const toggleNotes = () => {
   notesCollapsed.value = !notesCollapsed.value
 }
 
-const handleNextStep = () => {
+const handleNextStep = async () => {
   const currentKey = getCurrentStep().key
 
+  markStart('validation')
   const isValid = validateCurrentStep(form.value, currentKey)
+  markEnd('validation')
 
   if (isValid) {
     if (isLastStep.value) {
-      // Show modal instead of proceeding
-      openModal(markdown.value)
-      // Auto copy to clipboard
-      handleCopy()
+      // Generate markdown and show modal
+      isGenerating.value = true
+      markStart('markdown-generation')
+      
+      try {
+        const markdown = generateMarkdown(form.value)
+        markEnd('markdown-generation')
+        
+        // Use injection to call parent handler
+        const onFormComplete = inject('onFormComplete', () => {})
+        onFormComplete(markdown)
+      } catch (error) {
+        console.error('Error generating markdown:', error)
+      } finally {
+        isGenerating.value = false
+      }
     } else {
       nextStep()
     }
-  } else {
-    const errorMessage = getFieldError(currentKey) || 'Please check your input and try again.'
-    const { add } = useToast()
-    add({
-      title: 'Validation Error',
-      description: errorMessage,
-      color: 'error'
-    })
   }
 }
 
-const handleCopy = async () => {
-  const { add } = useToast()
-  const success = await copyToClipboard(markdown.value)
-  if (success) {
-    setCopied(true)
-    add({
-      title: 'Success',
-      description: 'Markdown copied to clipboard!',
-      color: 'success'
-    })
-    setTimeout(() => setCopied(false), 3000)
-  } else {
-    add({
-      title: 'Error',
-      description: 'Failed to copy to clipboard',
-      color: 'error'
-    })
-  }
-}
-
-
-
-// Watch for changes in objectives and sync acceptance criteria and technical steps
-watch(() => form.value.objective.length, (newLength, oldLength) => {
+// Optimized watchers with debouncing
+const debouncedObjectiveWatch = useDebounceFn((newLength: number, oldLength: number) => {
   if (newLength > oldLength) {
     // Objectives were added, add corresponding acceptance criteria
     while (form.value.acceptance.length < newLength) {
@@ -289,19 +291,24 @@ watch(() => form.value.objective.length, (newLength, oldLength) => {
       })
     }
   } else if (newLength < oldLength) {
-    // Objectives were removed, remove corresponding acceptance criteria
+    // Objectives were removed, remove corresponding items
     while (form.value.acceptance.length > newLength) {
       form.value.acceptance.pop()
     }
-    // Remove corresponding technical step groups
     while (form.value.tech.stepGroups.length > newLength) {
       form.value.tech.stepGroups.pop()
     }
   }
-})
+}, 300)
 
-// Watch for changes in UI specifications and validate
-watch(() => form.value.ui, () => {
-  validateField('ui', form.value.ui)
-}, { deep: true })
+// Watch for changes in objectives with debouncing
+watch(() => form.value.objective.length, debouncedObjectiveWatch)
+
+// Performance monitoring on mount
+onMounted(() => {
+  markStart('form-wizard-mount')
+  nextTick(() => {
+    markEnd('form-wizard-mount')
+  })
+})
 </script>
